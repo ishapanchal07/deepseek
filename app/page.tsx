@@ -1,7 +1,0 @@
-export default function Home(){
-  return(
-    <div>
-      <h1>tu gadha haiiii</h1>
-    </div>
-  )
-}
