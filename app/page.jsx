@@ -31,7 +31,9 @@ export default function  Home() {
                     (
                     <div></div>
                 )
-                    }
+                }
+                {/* promp box */}
+                <p className="text-xs absolute bottom-1 text-gary-500">AI-generated, for referance only</p>
                 </div>
             </div>
         </div>
