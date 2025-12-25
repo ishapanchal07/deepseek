@@ -1,11 +1,11 @@
-import { Inder } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 
-const inder = Inder({
+const inter = Inter({
   subsets: ["latin"],
   weight: "400",           
-  variable: "--font-inder",
+  variable: "--font-inter",
 });
 
 export const metadata = {
@@ -16,11 +16,13 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <ClerkProvider>
+      <AppContext.Provider>
     <html lang="en">
       <body className={`${inder.className} antialiased`}>
         {children}
       </body>
     </html>
+    </AppContext.Provider>
     </ClerkProvider>
   );
 }
