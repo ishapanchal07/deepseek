@@ -38,7 +38,7 @@ const Sidebar = ({expand, setExpand}) => {
 
                 <div className={`mt-8 text-white/25 text-sm ${expand ? "block" : "hidden"}`}>
                     <p className='my-1'>Recents</p>
-                    {/* chatLabel */}
+                    <ChatLabel/>
                 </div>
             </div>
 
