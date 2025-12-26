@@ -23,11 +23,13 @@ const PromptBox = ({setIsLoading, isLoading}) => {
            <div className='flex items-center justify-between text-sm'>
              <div className='flex items-center gap-2'>
                 <p className="flex items-center gap-2 text-xs border border-gray-300/40 px-2 py-1 rounded-full cursor-pointer hover:bg-gray-500/20 transition">
-                <Image className="h-5" src={assets.search} alt="Search" />
+                <Image className="h-5"   src={assets.deepthink_icon} alt="Search" />
+                {/* <Image className="h-5" src="https://images.seeklogo.com/logo-png/61/2/deepseek-ai-icon-logo-png_seeklogo-611473.png" height={20} width={20} alt="Search" /> */}
+
                 DeepThink (R1)
                 </p>
                 <p className="flex items-center gap-2 text-xs border border-gray-300/40 px-2 py-1 rounded-full cursor-pointer hover:bg-gray-500/20 transition">
-                <Image className="h-5" src={assets.search} alt='' />
+                <Image className="h-5" src={assets.search_icon} alt='search-image' />
                 Search
                 </p>
             </div>
