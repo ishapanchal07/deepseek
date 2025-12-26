@@ -1,6 +1,8 @@
+'use client'
+
 import { assets } from '@/assets/assets'
 import Image from 'next/image'
-import React from 'react'
+import React, { useState } from 'react'
 import { useClerk, UserButton } from '@clerk/nextjs'
 import { useAppContext } from '@/context/AppContext'
 import ChatLabel from "./ChatLabel"
@@ -9,6 +11,7 @@ const Sidebar = ({expand, setExpand}) => {
 
     const {openSignIn} = useClerk()
     const {user} = useAppContext()
+    const [openMenu, setOpenMenu] = useState({id: 0, open: false})
 
     return (
         <div className={`flex flex-col justify-between bg-[#212327] pt-7 transition-all z-50 max-md:absolute max-md:h-screen ${expand ? 'p-4 w-64' : 'md:w-20 w-9 max-md:overflow-hidden'}`}>
@@ -22,7 +25,10 @@ const Sidebar = ({expand, setExpand}) => {
                         <Image src={expand ? assets.sidebar_close_icon : assets.sidebar_icon} alt='' className='hidden md:block w-7'/>
                         <div>
                             {expand ? 'Close sidebar' : 'Open sidebar'}
-                            <div className={`w-3 h-3 absolute bg-black rotate-45 ${expand ? "left-1/2 -top-1.5 -teanslate-x-1/2" : "left-4 -bottom-1.5"}`}
+                            <div
+                              className={`w-3 h-3 absolute bg-black roatate-45 ${
+                                expand ? "right-1/2" : "left-4"
+                              } -bottom-1.5`}
                             ></div>
                         </div>
                     </div>
@@ -39,7 +45,7 @@ const Sidebar = ({expand, setExpand}) => {
 
                 <div className={`mt-8 text-white/25 text-sm ${expand ? "block" : "hidden"}`}>
                     <p className='my-1'>Recents</p>
-                    <ChatLabel/>
+                    <ChatLabel openMenu={openMenu} setOpenMenu={setOpenMenu}/>
                 </div>
             </div>
 
@@ -50,7 +56,7 @@ const Sidebar = ({expand, setExpand}) => {
                     <div className='relative w-max bg-black text-white text-sm p-3 rounded-lg shadow-lg'>
                         <Image src={assets.qrcode} alt='' className='w-44'/>
                         <p>Scan to get Deepseek App</p>
-                        <div className='w-3 h-3 absolute bg-black roatate-45 ${expand ? "right-1/2" : "left-4"} -bottom-1.5'></div>
+                        <div className='w-3 h-3 absolute bg-black roatate-45 -bottom-1.5'></div>
                     </div>
                     </div>
                 {expand && <> <span>Get App</span> <Image alt='' src={assets.new_icon} /></>}
@@ -62,7 +68,6 @@ const Sidebar = ({expand, setExpand}) => {
                     user ? <UserButton />
                     : <Image src={assets.profile_icon} alt='' className='w-7' />
                 }
-                <Image src={assets.profile_icon} alt='' className='w-7' />
                 {expand && <span>My Profile</span>}
             </div>
             </div>
