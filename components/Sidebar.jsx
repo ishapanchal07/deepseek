@@ -3,6 +3,7 @@ import Image from 'next/image'
 import React from 'react'
 import { useClerk, UserButton } from '@clerk/nextjs'
 import { useAppContext } from '@/context/AppContext'
+import ChatLabel from "./ChatLabel"
 
 const Sidebar = ({expand, setExpand}) => {
 

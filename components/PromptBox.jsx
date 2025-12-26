@@ -5,6 +5,7 @@ import Image from 'next/image'
 
 const PromptBox = ({setIsLoading, isLoading}) => {
     const [prompt, setPrompt] = useState('');
+    const [isExpanded,setIsExpanded] = useState(false)
 
     return (
         <form
