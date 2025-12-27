@@ -7,19 +7,22 @@ export async function GET(req) {
     try {
         const { userId } = getAuth(req);
 
-        if(!userId){
+        if (!userId) {
             return NextResponse.json({
                 success: false,
-                maessage: "User not authenticated",
+                message: "User not authenticated",
             });
         }
 
-        //Connect to the database and fetch all chats for the user
+        // Connect to the database and fetch all chats for the user
         await connectDB();
-        const data = await Chat.find({userId});
+        const data = await Chat.find({ userId });
 
-        return NextResponse.json({ success: true, data})
+        return NextResponse.json({ success: true, data });
     } catch (error) {
-        return NextResponse.json({ success: false, error: error.maessage});
+        return NextResponse.json({
+            success: false,
+            error: error.message,
+        });
     }
 }
