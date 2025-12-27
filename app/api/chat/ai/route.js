@@ -1,3 +1,4 @@
+export const maxDuration = 60;
 import Chat from "@/models/Chat";
 import { getAuth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
@@ -13,7 +14,7 @@ const openai = new OpenAI({
  
 export async function POST(req) {
     try {
-        const {useId} = getAuth(req)
+        const { userId } = getAuth(req);
 
         // Export OpenAI client and prompt from the request body 
         const { chatId, prompt} = await req.json();
@@ -54,7 +55,6 @@ export async function POST(req) {
          return NextResponse.json({success: true, data: message})
 
     } catch (error) {
-        return NextResponse.json({ sucess: false, error: error.message});
+        return NextResponse.json({ success: false, error: error.message});
     }
 }
-
