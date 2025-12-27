@@ -2,6 +2,7 @@
 import { createContext, useContext, useState } from "react";
 import { useAuth, useUser } from "@clerk/nextjs";
 import axios, { AxiosError } from "axios";
+import toast from "react-hot-toast";
 
 export const AppContext = createContext(null);
 
@@ -26,15 +27,37 @@ export const AppContextProvider = ({ children }) => {
         Authorization: `Bearer ${token}`
       }})
     } catch (error) {
-      
+      toast.error(error.message)
     }
   }
 
   const fetchUsersChats = async ()=>{
     try {
-      
+      const token = await getToken();
+      const {data} = await axios.post('/api/chat/get', {}, {headers:{
+        Authorization: `Bearer ${token}`
+      }})
+      if(data.success){
+        console.log(data.data);
+        setChats(data.data)
+
+        // If the user has no chats, create one
+        if(data.data.length === 0){
+          await createNewChat();
+          return fetchUsersChats();
+        }else{
+          // sort chats by updated data
+          data.data.sort((a,b)=> new Date(b.updatedAt) - new Date(a.updatedAt));
+
+          // Set recently updated chat as selected
+          setselectedChat(data.data[0]);
+          console.log(data.data[0]);
+        }
+      }else{
+        toast.error(data.message)
+      }
     } catch (error) {
-      
+     toast.error(error.message) 
     }
   }
 
