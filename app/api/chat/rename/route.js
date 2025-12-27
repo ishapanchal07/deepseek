@@ -22,13 +22,13 @@ export async function POST(req) {
 
         return NextResponse.json({
             success: true,
-            message: "Chat name updated successfully",
+            message: "Chat updated successfully",
         });
 
     } catch (error) {
         return NextResponse.json({
             success: false,
-            message: error.message || "Something went wrong",
-        }, { status: 500 });
+            message: error.message,
+        });
     }
 }
