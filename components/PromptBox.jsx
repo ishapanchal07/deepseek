@@ -1,10 +1,62 @@
 import { assets } from '@/assets/assets'
 import React, { useState } from 'react'
 import Image from 'next/image'
+import { useAppContext } from '@/context/AppContext';
+import toast from 'react-hot-toast';
+import axios from 'axios';
 
 
 const PromptBox = ({setIsLoading, isLoading}) => {
     const [prompt, setPrompt] = useState('');
+    const {user, chats, setChats, selectedChat, setSelectedChat} = useAppContext();
+
+    const sendPrompt = async (e)=>{
+        const promptCopy = prompt;
+
+        try {
+            e.preventDefault();
+            if(!user) return toast.error('Login to send message');
+            if(isLoading) return toast.error('Wait for the previous prompt responce');
+
+            setIsLoading(true)
+            setPrompt("")
+
+            const usetPrompt = {
+                role: "user",
+                content: prompt,
+                timestamp: Date.now,
+            }
+
+            // Saving user prompt in chats array 
+
+            setChats((prevChats)=> prevChats.map((chat)=> chat._id === selectedChat._id ? {
+                ...chat,
+                messages: [...chat.messages, userPrompt]
+            }: chat
+        ))
+
+        // Saving user prompt in selected chat 
+
+        setSelectedChat((prve)=> ({
+            ...prev,
+            messages: [...prev.messages, userPrompt]
+        }))
+        
+
+        const {data} = await axios.post('/api/chat/ai', {
+            chatId: selectedChat._id,
+            prompt
+        })
+
+        if(data.success){
+            setChats((prevChats)=>prevChats.map(chat._id === selectedChat._id ? {...chat, messages: [...chat.messages, data.data]} : chat))
+        }else{
+            
+        }
+        } catch (error) {
+            
+        }
+    }
     const [isExpanded,setIsExpanded] = useState(false)
 
     return (
