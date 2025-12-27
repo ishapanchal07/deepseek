@@ -14,16 +14,15 @@ export async function POST(req) {
         }
 
         const { chaId, name } = await req.json();
-
+        // Connect to the database and update the chat name
+        await connectDB();
         await Chat.findOneAndUpdate(
             { _id: chaId, userId },
             { name }
         );
 
-        return NextResponse.json({
-            success: true,
-            message: "Chat updated successfully",
-        });
+        return NextResponse.json({ success: true, message: "Chat updated successfully",
+ });
 
     } catch (error) {
         return NextResponse.json({
