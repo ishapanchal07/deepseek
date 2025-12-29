@@ -1,149 +1,160 @@
 import { assets } from '@/assets/assets'
 import React, { useState } from 'react'
 import Image from 'next/image'
-import { useAppContext } from '@/context/AppContext';
-import toast from 'react-hot-toast';
-import axios from 'axios';
+import { useAppContext } from '@/context/AppContext'
+import toast from 'react-hot-toast'
+import axios from 'axios'
 
 const PromptBox = ({ setIsLoading, isLoading }) => {
-    const [prompt, setPrompt] = useState('');
-    const { user, chats, setChats, selectedChat, setSelectedChat } = useAppContext();
+    const [prompt, setPrompt] = useState('')
+    const { user, chats, setChats, selectedChat, setSelectedChat } = useAppContext()
 
     const handleKeyDown = (e) => {
-        if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            sendPrompt(e);
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault()
+            sendPrompt(e)
         }
     }
 
     const sendPrompt = async (e) => {
-        const promptCopy = prompt;
+        e.preventDefault()
+
+        if (!user) return toast.error('Login to send message')
+        if (!selectedChat) return toast.error('Chat not ready yet')
+        if (isLoading) return toast.error('Wait for the previous response')
+        if (!prompt.trim()) return
+
+        const promptCopy = prompt
+        const chatId = selectedChat._id
 
         try {
-            e.preventDefault();
-            if (!user) return toast.error('Login to send message');
-            if (isLoading) return toast.error('Wait for the previous prompt response');
-
-            setIsLoading(true);
-            setPrompt("");
+            setIsLoading(true)
+            setPrompt('')
 
             const userPrompt = {
-                role: "user",
+                role: 'user',
                 content: prompt,
                 timestamp: Date.now(),
             }
 
-            // Saving user prompt in chats array
-            setChats((prevChats) =>
-                prevChats.map((chat) =>
-                    chat._id === selectedChat._id
+            /* ---------- optimistic update (user message) ---------- */
+
+            setChats((prev) =>
+                prev.map((chat) =>
+                    chat._id === chatId
                         ? { ...chat, messages: [...chat.messages, userPrompt] }
                         : chat
                 )
-            );
+            )
 
-            // Saving user prompt in selected chat
             setSelectedChat((prev) => ({
                 ...prev,
-                messages: [...prev.messages, userPrompt]
-            }));
+                messages: [...prev.messages, userPrompt],
+            }))
+
+            /* ---------- AI request ---------- */
 
             const { data } = await axios.post('/api/chat/ai', {
-                chatId: selectedChat._id,
-                prompt
-            });
+                chatId,
+                prompt,
+            })
 
-            if (data.success) {
-                setChats((prevChats) =>
-                    prevChats.map((chat) =>
-                        chat._id === selectedChat._id
-                            ? { ...chat, messages: [...chat.messages, data.data] }
-                            : chat
-                    )
-                );
-
-                const message = data.data.content;
-                const messageTokens = message.split(" ");
-
-                let assistantMessage = {
-                    role: 'assistant',
-                    content: "",
-                    timestamp: Date.now(),
-                };
-
-                setSelectedChat((prev) => ({
-                    ...prev,
-                    messages: [...prev.messages, assistantMessage],
-                }));
-
-                for (let i = 0; i < messageTokens.length; i++) {
-                    setTimeout(() => {
-                        assistantMessage.content = messageTokens.slice(0, i + 1).join(" ");
-                        setSelectedChat((prev) => {
-                            const updatedMessages = [
-                                ...prev.messages.slice(0, -1),
-                                assistantMessage
-                            ];
-                            return { ...prev, messages: updatedMessages };
-                        });
-                    }, i * 100);
-                }
-            } else {
-                toast.error(data.message);
-                setPrompt(promptCopy);
+            if (!data.success) {
+                toast.error(data.message)
+                setPrompt(promptCopy)
+                return
             }
-        } catch (error) {
-            toast.error(error.message);
-            setPrompt(promptCopy);
+
+            /* ---------- add empty assistant message ---------- */
+
+            const assistantMessage = {
+                role: 'assistant',
+                content: '',
+                timestamp: Date.now(),
+            }
+
+            setChats((prev) =>
+                prev.map((chat) =>
+                    chat._id === chatId
+                        ? { ...chat, messages: [...chat.messages, assistantMessage] }
+                        : chat
+                )
+            )
+
+            setSelectedChat((prev) => ({
+                ...prev,
+                messages: [...prev.messages, assistantMessage],
+            }))
+
+            /* ---------- typing animation ---------- */
+
+            const tokens = data.data.content.split(' ')
+
+            tokens.forEach((_, index) => {
+                setTimeout(() => {
+                    setSelectedChat((prev) => {
+                        const messages = [...prev.messages]
+                        const lastIndex = messages.length - 1
+
+                        messages[lastIndex] = {
+                            ...messages[lastIndex],
+                            content: tokens.slice(0, index + 1).join(' '),
+                        }
+
+                        return { ...prev, messages }
+                    })
+                }, index * 80)
+            })
+        } catch (err) {
+            toast.error(err.message)
+            setPrompt(promptCopy)
         } finally {
-            setIsLoading(false);
+            setIsLoading(false)
         }
     }
-
-    const [isExpanded, setIsExpanded] = useState(false);
 
     return (
         <form
             onSubmit={sendPrompt}
-            className={`w-full ${
-                false ? 'max-w-3xl' : 'max-w-2xl'
-            } bg-[#404045] p-4 rounded-3xl mt-4 transition-all`}
+            className="w-full max-w-2xl bg-[#404045] p-4 rounded-3xl mt-4"
         >
             <textarea
                 onKeyDown={handleKeyDown}
-                className="outline-none w-full resize-none overflow-hidden break-words bg-transparent text-white"
+                className="outline-none w-full resize-none bg-transparent text-white"
                 rows={2}
                 placeholder="Message Deepseek"
                 onChange={(e) => setPrompt(e.target.value)}
                 value={prompt}
             />
 
-            <div className='flex items-center justify-between text-sm'>
-                <div className='flex items-center gap-2'>
-                    <p className="flex items-center gap-2 text-xs border border-gray-300/40 px-2 py-1 rounded-full cursor-pointer hover:bg-gray-500/20 transition">
-                        <Image className="h-5" src={assets.deepthink_icon} alt="Search" />
+            <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2">
+                    <p className="flex items-center gap-2 text-xs border border-gray-300/40 px-2 py-1 rounded-full">
+                        <Image src={assets.deepthink_icon} alt="" width={16} height={16} />
                         DeepThink (R1)
                     </p>
-                    <p className="flex items-center gap-2 text-xs border border-gray-300/40 px-2 py-1 rounded-full cursor-pointer hover:bg-gray-500/20 transition">
-                        <Image className="h-5" src={assets.search_icon} alt='search-image' />
+                    <p className="flex items-center gap-2 text-xs border border-gray-300/40 px-2 py-1 rounded-full">
+                        <Image src={assets.search_icon} alt="" width={16} height={16} />
                         Search
                     </p>
                 </div>
-                <div className='flex items-center gap-2'>
-                    <Image className="w-4 cursor-pointer" src={assets.pin_icon} alt='' />
-                    <button className={`${prompt ? "bg-primary" : "bg-[#71717a]"} rounded-full p-2 cursor-pointer`}>
-                        <Image
-                            className="w-4 cursor-pointer"
-                            // src={prompt ? assets.pin_icon : assets.arrow_icon_dull}
-                            src={prompt ? assets.arrow_icon_dull : assets.arrow_icon}
 
-                            alt=''
-                        />
-                    </button>
-                </div>
+                <button
+                    type="submit"
+                    className={`rounded-full p-2 ${
+                        prompt ? 'bg-primary' : 'bg-[#71717a]'
+                    }`}
+                >
+                    <Image
+                        src={prompt ? assets.arrow_icon : assets.arrow_icon_dull}
+                        alt=""
+                        width={16}
+                        height={16}
+                    />
+                </button>
             </div>
         </form>
-    );
+    )
 }
 
-export default PromptBox;
+export default PromptBox
