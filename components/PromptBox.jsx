@@ -134,7 +134,9 @@ const PromptBox = ({ setIsLoading, isLoading }) => {
                     <button className={`${prompt ? "bg-primary" : "bg-[#71717a]"} rounded-full p-2 cursor-pointer`}>
                         <Image
                             className="w-4 cursor-pointer"
-                            src={prompt ? assets.pin_icon : assets.arrow_icon_dull}
+                            // src={prompt ? assets.pin_icon : assets.arrow_icon_dull}
+                            src={prompt ? assets.arrow_icon_dull : assets.arrow_icon}
+
                             alt=''
                         />
                     </button>
