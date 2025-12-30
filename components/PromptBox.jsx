@@ -7,7 +7,7 @@ import axios from 'axios'
 
 const PromptBox = ({ setIsLoading, isLoading }) => {
     const [prompt, setPrompt] = useState('')
-    const { user, chats, setChats, selectedChat, setSelectedChat } = useAppContext()
+    const { user, chats, setChats, selectedChat, setSelectedChat, ensureChatExists } = useAppContext()
 
     const handleKeyDown = (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
@@ -20,12 +20,21 @@ const PromptBox = ({ setIsLoading, isLoading }) => {
         e.preventDefault()
 
         if (!user) return toast.error('Login to send message')
-        if (!selectedChat) return toast.error('Chat not ready yet')
         if (isLoading) return toast.error('Wait for the previous response')
         if (!prompt.trim()) return
 
+        // Ensure a chat exists before sending
+        let currentChat = selectedChat
+        if (!currentChat) {
+            currentChat = await ensureChatExists()
+            
+            if (!currentChat) {
+                return toast.error('Failed to initialize chat. Please try again.')
+            }
+        }
+
         const promptCopy = prompt
-        const chatId = selectedChat._id
+        const chatId = currentChat._id
 
         try {
             setIsLoading(true)
@@ -47,10 +56,13 @@ const PromptBox = ({ setIsLoading, isLoading }) => {
                 )
             )
 
-            setSelectedChat((prev) => ({
-                ...prev,
-                messages: [...prev.messages, userPrompt],
-            }))
+            setSelectedChat((prev) => {
+                if (!prev || prev._id !== chatId) return prev
+                return {
+                    ...prev,
+                    messages: [...prev.messages, userPrompt],
+                }
+            })
 
             /* ---------- AI request ---------- */
 
@@ -81,10 +93,13 @@ const PromptBox = ({ setIsLoading, isLoading }) => {
                 )
             )
 
-            setSelectedChat((prev) => ({
-                ...prev,
-                messages: [...prev.messages, assistantMessage],
-            }))
+            setSelectedChat((prev) => {
+                if (!prev || prev._id !== chatId) return prev
+                return {
+                    ...prev,
+                    messages: [...prev.messages, assistantMessage],
+                }
+            })
 
             /* ---------- typing animation ---------- */
 
@@ -93,6 +108,7 @@ const PromptBox = ({ setIsLoading, isLoading }) => {
             tokens.forEach((_, index) => {
                 setTimeout(() => {
                     setSelectedChat((prev) => {
+                        if (!prev || prev._id !== chatId) return prev
                         const messages = [...prev.messages]
                         const lastIndex = messages.length - 1
 

@@ -41,9 +41,8 @@ export const AppContextProvider = ({ children }) => {
         try {
             const token = await getToken()
 
-            const { data } = await axios.post(
+            const { data } = await axios.get(
                 "/api/chat/get",
-                {},
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -53,7 +52,7 @@ export const AppContextProvider = ({ children }) => {
 
             if (!data.success) {
                 toast.error(data.message)
-                return
+                return []
             }
 
             const sortedChats = data.data.sort(
@@ -64,11 +63,80 @@ export const AppContextProvider = ({ children }) => {
 
             if (sortedChats.length === 0) {
                 await createNewChat()
+                return []
             } else {
                 setSelectedChat(sortedChats[0])
+                return sortedChats
             }
         } catch (err) {
             toast.error(err.message)
+            return []
+        }
+    }
+
+    const ensureChatExists = async () => {
+        try {
+            if (!user) return null
+
+            // If we already have a selected chat, return it
+            if (selectedChat) return selectedChat
+
+            // Try to fetch chats
+            const token = await getToken()
+            const { data } = await axios.get(
+                "/api/chat/get",
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            )
+
+            if (data.success && data.data && data.data.length > 0) {
+                const sortedChats = data.data.sort(
+                    (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)
+                )
+                setChats(sortedChats)
+                setSelectedChat(sortedChats[0])
+                return sortedChats[0]
+            }
+
+            // No chats exist, create one
+            const createResponse = await axios.post(
+                "/api/chat/create",
+                {},
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            )
+
+            if (createResponse.data.success) {
+                // Fetch the newly created chat
+                const { data: fetchData } = await axios.get(
+                    "/api/chat/get",
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
+                )
+
+                if (fetchData.success && fetchData.data && fetchData.data.length > 0) {
+                    const sortedChats = fetchData.data.sort(
+                        (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)
+                    )
+                    setChats(sortedChats)
+                    setSelectedChat(sortedChats[0])
+                    return sortedChats[0]
+                }
+            }
+
+            return null
+        } catch (err) {
+            toast.error(err.message)
+            return null
         }
     }
 
@@ -88,6 +156,7 @@ export const AppContextProvider = ({ children }) => {
                 setSelectedChat,
                 fetchUsersChats,
                 createNewChat,
+                ensureChatExists,
             }}
         >
             {children}
